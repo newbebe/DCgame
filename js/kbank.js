@@ -7,8 +7,8 @@ const kbank = KBank({
 
 (async () => {
   const session = await kbank.checkouts.create({
-    amount: 9900,        // 99 THB
-    currency: 'THB',
+    amount: 99,        // 0.99 USD
+    currency: 'USD',
     orderId: `dc-${Date.now()}`,
     paymentMethods: ['card', 'alipay', 'wechatpay', 'promptpay'],
     returnUrl: 'https://www.dingcheng.tech/success.html',
