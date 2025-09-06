@@ -146,8 +146,9 @@
                                 <span class="text-sm">4.3 (79)</span>
                             </div>
                             <div class="bottom-area d-flex align-items-center justify-content-between">
-                                <h5>$0.99</h5>
-                                <a href="#" class="cmn-btn">Add to Basket</a>
+                                <h5>THB 100</h5>
+                                <button id="pay-btn" data-amount="100.00">Pay THB 100</button>
+                                
                             </div>
                         </div>
                     </div>
@@ -393,6 +394,72 @@
     <script src="js/jquery.magnific-popup.min.js"></script>
     <script src="js/wow.js"></script>
     <script src="js/main.js"></script>
+
+<script>
+  // 1) 你的后端域名（先用 Vercel 的生产域名，例如 https://dctech-backend.vercel.app）
+  //   在 Vercel 项目 > Settings > Domains 里能看到 Production Domain
+  window.DCTECH_BACKEND = 'https://d-ctech-backend.vercel.app';
+
+  // 2) 你的 shopId（KBank/KGP 分配/你创建的值）
+  const SHOP_ID = 'SHOP001'; // TODO: 换成你的真实 shopId
+
+  // 3) 是否启用 3DS（true 需要回跳白名单与回跳页）
+  const USE_3DS = true;
+
+  // 4) KPG/KBank 的测试卡 token（先用沙箱 token；之后集成真实 tokenization 流程）
+  const TOKEN = 'tokn_sandbox_xxxxxxxx'; // TODO: 换成你的测试 token
+
+  // 生成恰好17位的ID：ORDERxxxxxxxxxxxxx / PAYMENTxxxxxxxxxxxx / REFUNDxxxxxxxxxxxxx
+  function genId(prefix) {
+    const need = 17 - prefix.length;
+    const now = Date.now().toString();
+    const rand = Math.floor(Math.random() * 1e12).toString().padStart(12, '0');
+    const tail = (now + rand).slice(-need).padStart(need, '0');
+    return prefix + tail;
+  }
+
+  async function pay(amountStr) {
+    const orderId   = genId('ORDER');
+    const paymentId = genId('PAYMENT');
+
+    const body = {
+      partnerShopID: SHOP_ID,
+      partnerOrderID:  orderId,                 // 17位
+      partnerPaymentID: paymentId,              // 17位
+      amount: Number(amountStr || '100').toFixed(2),
+      currencyCode: 'THB',
+      payoutType: 'DELAY',
+      mode: 'TOKEN',
+      token: TOKEN,                             // mode=TOKEN 必填
+      saveFlag: false,
+      threeDSFlag: USE_3DS,
+      switchBackURL: USE_3DS
+        ? 'https://www.dingcheng.tech/kcard-return?paymentId=' + paymentId
+        : undefined
+    };
+
+    const resp = await fetch(window.DCTECH_BACKEND + '/api/kgp-card-charge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await resp.json();
+
+    // KGP 可能返回重定向链接/Deeplink做3DS
+    if (data.redirectUrl) {
+      location.href = data.redirectUrl;
+      return;
+    }
+    // 没有重定向就直接把返回显示出来（开发期调试）
+    alert(JSON.stringify(data, null, 2));
+  }
+
+  // 绑定按钮点击
+  document.getElementById('pay-btn')
+    .addEventListener('click', (e) => pay(e.target.dataset.amount || '100.00'));
+</script>
+
 
 </body>
 
