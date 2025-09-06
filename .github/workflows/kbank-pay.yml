@@ -1,0 +1,25 @@
+name: KBank-Pay-CloudFunction
+on:
+  repository_dispatch:          # 允许前端 HTTP 触发
+    types: [kbank-pay]
+
+jobs:
+  pay:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install official SDK
+        run: npm install @k-bank/sdk
+
+      - name: Run cloud function
+        env:
+          KBANK_MID: ${{ secrets.KBANK_MID }}
+          KBANK_SECRET: ${{ secrets.KBANK_SECRET }}
+        run: node .github/scripts/kbank.js
