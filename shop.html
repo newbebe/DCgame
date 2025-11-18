@@ -147,7 +147,7 @@
                             </div>
                             <div class="bottom-area d-flex align-items-center justify-content-between">
                                 <h5>THB 100</h5>
-                                <button class="cmn-btn" id="pay-btn" data-amount="100.00">Pay THB 100</button>
+                                <button class="cmn-btn" id="pay-btn" data-amount="100.00" style="cursor:pointer;">Pay THB 100</button>
                                 
                             </div>
                         </div>
@@ -395,64 +395,54 @@
     <script src="js/wow.js"></script>
     <script src="js/main.js"></script>
 
-<!-- <script> 为下面这段（2025 年官方最新 SDK 写法） -->
 <script>
-  // ============ 沙箱测试参数（正式上线前换成银行给的） ============
-  const KGP_PUBLIC_KEY = 'pk_test_3c4b4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u';
-  const MERCHANT_ID    = '417123456789001';
-  const BACKEND_URL    = 'https://d-ctech-backend.vercel.app';   // 你的后端
+  async function handlePayClick(event) {
+    const btn = event.currentTarget;
+    const productId = btn.getAttribute('data-product-id');
+    const amount = Number(btn.getAttribute('data-amount'));
 
-  function loadKPaymentSDK() {
-    return new Promise((resolve) => {
-      if (window.KPayment) return resolve();
-      const script = document.createElement('script');
-      script.src = 'https://dev-kpaymentgateway.kasikornbank.com/ui/js/kpayment.min.js';
-      script.onload = resolve;
-      document.body.appendChild(script);
-    });
+    if (!productId || !amount) {
+      alert('商品信息有误，请稍后再试');
+      return;
+    }
+
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Redirecting...';
+
+    try {
+      const res = await fetch('/api/kgp/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, amount }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok || !data.redirectUrl) {
+        console.error('Checkout error:', data);
+        alert('创建支付失败，请稍后再试');
+        btn.disabled = false;
+        btn.textContent = originalText;
+        return;
+      }
+
+      // 跳转到银行支付页
+      window.location.href = data.redirectUrl;
+    } catch (err) {
+      console.error('Network error:', err);
+      alert('网络异常，请稍后再试');
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
   }
 
-  async function payWithCard(amountStr) {
-    const amount = Number(amountStr || '100').toFixed(2);
-    const orderId = 'ORDER_' + Date.now();
-
-    await loadKPaymentSDK();
-
-    window.KPayment.show({
-      apiKey: KGP_PUBLIC_KEY,
-      amount: Math.round(amount * 100),
-      currency: 'THB',
-      paymentMethods: ['card'],
-      mid: MERCHANT_ID,
-      name: 'DCtech Test Shop',
-      description: `Test Order ${orderId}`,
-
-      onTokenSuccess: async function(token) {
-        console.log('沙箱 token:', token);   // 会看到类似 tok_1abc2def...
-
-        const resp = await fetch(BACKEND_URL + '/api/kgp-card-charge-sdk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId,
-            token,
-            amount: Math.round(amount * 100)
-          })
-        });
-
-        const result = await resp.json();
-        console.log('后端返回:', result);
-        alert(result.success ? '支付成功！（沙箱）' : '支付失败: ' + JSON.stringify(result));
-      },
-
-      onClose: () => console.log('弹窗关闭')
-    });
-  }
-
-  document.getElementById('pay-btn').addEventListener('click', (e) => {
-    payWithCard(e.target.dataset.amount);
+  // 绑定所有支付按钮
+  document.querySelectorAll('.pay-btn').forEach((btn) => {
+    btn.addEventListener('click', handlePayClick);
   });
 </script>
+
 
 </body>
 
