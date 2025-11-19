@@ -394,50 +394,53 @@
     <script src="js/main.js"></script>
 
 <script>
-  const API_BASE = 'https://dctech-backend-git-uat-garys-projects-44516b1c.vercel.app';
+  const API_BASE =
+  'https://dctech-backend-git-uat-garys-projects-44516b1c.vercel.app';
 
-  async function handlePayClick(event) {
-    const btn = event.currentTarget;
-    const productId = btn.getAttribute('data-product-id');
-    const amount = Number(btn.getAttribute('data-amount'));
+async function handlePayClick(event) {
+  const btn = event.currentTarget;
+  const productId = btn.getAttribute('data-product-id');
+  const amount = Number(btn.getAttribute('data-amount'));
 
-    if (!productId || !amount) {
-      alert('商品信息有误，请稍后再试');
+  if (!productId || !amount) {
+    alert('商品信息有误，请稍后再试');
+    return;
+  }
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Redirecting...';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/kgp/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, amount }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.ok || !data.redirectUrl) {
+      console.error('Checkout error:', data);
+      alert('创建支付失败，请稍后再试');
+      btn.disabled = false;
+      btn.textContent = originalText;
       return;
     }
 
-    btn.disabled = true;
-    const originalText = btn.textContent;
-    btn.textContent = 'Redirecting...';
-
-    try {
-      const url = `${API_BASE}/api/kgp/checkout?productId=${encodeURIComponent(
-        productId
-      )}&amount=${encodeURIComponent(amount)}`;
-
-      const res = await fetch(url); // GET，无 body，无 header
-      const data = await res.json();
-
-      if (!res.ok || !data.ok || !data.redirectUrl) {
-        console.error('Checkout error:', data);
-        alert('创建支付失败，请稍后再试');
-        btn.disabled = false;
-        btn.textContent = originalText;
-        return;
-      }
-
-      window.location.href = data.redirectUrl;
-    } catch (err) {
-      console.error('Network error:', err);
-      alert('网络异常，请稍后再试');
-      btn.disabled = false;
-      btn.textContent = originalText;
-    }
+    window.location.href = data.redirectUrl;
+  } catch (err) {
+    console.error('Network error:', err);
+    alert('网络异常，请稍后再试');
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
+}
 
-  document.querySelectorAll('.pay-btn').forEach((btn) => {
-    btn.addEventListener('click', handlePayClick);
-  });
+document.querySelectorAll('.pay-btn').forEach((btn) => {
+  btn.addEventListener('click', handlePayClick);
+});
+
 </script>
 
 
