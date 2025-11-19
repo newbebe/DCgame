@@ -396,6 +396,8 @@
     <script src="js/main.js"></script>
 
 <script>
+  const API_BASE = 'https://dctech-backend-as3pto68p-garys-projects-44516b1c.vercel.app'; // ← 后端UAT地址
+
   async function handlePayClick(event) {
     const btn = event.currentTarget;
     const productId = btn.getAttribute('data-product-id');
@@ -411,7 +413,7 @@
     btn.textContent = 'Redirecting...';
 
     try {
-      const res = await fetch('/api/kgp/checkout', {
+      const res = await fetch(`${API_BASE}/api/kgp/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, amount }),
@@ -427,7 +429,7 @@
         return;
       }
 
-      // 跳转到银行支付页
+      // 现在还是跳“假支付页”（比如 Google），后端已经返回 redirectUrl
       window.location.href = data.redirectUrl;
     } catch (err) {
       console.error('Network error:', err);
@@ -437,11 +439,11 @@
     }
   }
 
-  // 绑定所有支付按钮
   document.querySelectorAll('.pay-btn').forEach((btn) => {
     btn.addEventListener('click', handlePayClick);
   });
 </script>
+
 
 
 </body>
