@@ -395,53 +395,54 @@
 
 <script>
   const API_BASE =
-  'https://dctech-backend-git-uat-garys-projects-44516b1c.vercel.app';
+    "https://dctech-backend-git-uat-garys-projects-44516b1c.vercel.app";
 
-async function handlePayClick(event) {
-  const btn = event.currentTarget;
-  const productId = btn.getAttribute('data-product-id');
-  const amount = Number(btn.getAttribute('data-amount'));
+  async function handlePayClick(event) {
+    const btn = event.currentTarget;
+    const productId = btn.getAttribute("data-product-id");
+    const amount = Number(btn.getAttribute("data-amount"));
 
-  if (!productId || !amount) {
-    alert('商品信息有误，请稍后再试');
-    return;
-  }
-
-  btn.disabled = true;
-  const originalText = btn.textContent;
-  btn.textContent = 'Redirecting...';
-
-  try {
-    const res = await fetch(`${API_BASE}/api/kgp/checkout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, amount }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.ok || !data.redirectUrl) {
-      console.error('Checkout error:', data);
-      alert('创建支付失败，请稍后再试');
-      btn.disabled = false;
-      btn.textContent = originalText;
+    if (!productId || !amount) {
+      alert("商品信息有误，请稍后再试");
       return;
     }
 
-    window.location.href = data.redirectUrl;
-  } catch (err) {
-    console.error('Network error:', err);
-    alert('网络异常，请稍后再试');
-    btn.disabled = false;
-    btn.textContent = originalText;
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = "Redirecting...";
+
+    try {
+      const res = await fetch(`${API_BASE}/api/kgp/checkout`, {
+        method: "POST",
+        // ❗ 不要 headers
+        // headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, amount }), // 保留 body
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok || !data.redirectUrl) {
+        console.error("Checkout error:", data);
+        alert("创建支付失败，请稍后再试");
+        btn.disabled = false;
+        btn.textContent = originalText;
+        return;
+      }
+
+      window.location.href = data.redirectUrl;
+    } catch (err) {
+      console.error("Network error:", err);
+      alert("网络异常，请稍后再试");
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
   }
-}
 
-document.querySelectorAll('.pay-btn').forEach((btn) => {
-  btn.addEventListener('click', handlePayClick);
-});
-
+  document.querySelectorAll(".pay-btn").forEach((btn) => {
+    btn.addEventListener("click", handlePayClick);
+  });
 </script>
+
 
 
 
